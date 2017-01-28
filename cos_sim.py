@@ -2,11 +2,13 @@ import numpy as np
 import pandas as pd
 import re
 import warnings
+import csv
 
 from Tkinter import *
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction import DictVectorizer
 from scipy import spatial
 from PIL import Image
 
@@ -38,9 +40,17 @@ for i in xrange (0, num_reviews ):
     clean_train_reviews.append( review_to_words( train["Tweets"][i] ))
 
 vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
-train_data_features = vectorizer.fit_transform(clean_train_reviews)
-train_data_features = train_data_features.toarray()
-vocab = vectorizer.get_feature_names()
+train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray
+
+# Vocab from a pre-calculated list #
+# with open('Vocab_Trump.csv') as f:
+#     vocab = dict(filter(None, csv.reader(f)))
+# # print vocab.keys()
+#
+# vectorizer = DictVectorizer()
+# vectorizer.fit_transform(vocab).toarray()
+
+# print vectorizer.get_feature_names()
 
 ########################################################################################################################
 # Calculation of input vector #
@@ -61,8 +71,8 @@ new_vec = np.genfromtxt("Input_vector.csv", delimiter=",")
 
 ########################################################################################################################
 # Calculation of cosine similarity of new Tweet #
-trump = np.genfromtxt("trump_avg_vec.csv", delimiter=",")
-hillary = np.genfromtxt("hill_avg_vec.csv", delimiter=",")
+trump = np.genfromtxt("trump_tf_idf.csv", delimiter=",")
+hillary = np.genfromtxt("hill_tf_idf.csv", delimiter=",")
 
 trump_sim = 1-spatial.distance.cosine(trump, new_vec)
 hill_sim = 1-spatial.distance.cosine(hillary, new_vec)

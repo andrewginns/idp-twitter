@@ -5,35 +5,30 @@ import re
 import bs4
 import sklearn
 import numpy as np
+import warnings
 
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 
 def review_to_words( raw_review ):
-    review_text = BeautifulSoup(raw_review, "html.parser").get_text()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        review_text = BeautifulSoup(raw_review, "html.parser").get_text()
 
-    letters_only = re.sub("[^a-zA-Z]", " ", review_text)
+        letters_only = re.sub("[^a-zA-Z]", " ", review_text)
 
-    words = letters_only.lower().split()
+        words = letters_only.lower().split()
 
-    stops = set(stopwords.words("english"))
+        stops = set(stopwords.words("english"))
 
-    meaningful_words = [w for w in words if not w in stops]
+        meaningful_words = [w for w in words if not w in stops]
 
-    return ( " ".join( meaningful_words ))
+        return ( " ".join( meaningful_words ))
 
 
 train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
-
-print train.shape
-
-print train.columns.values
-
-# print train["Tweets"][0]
-
-# clean_review = review_to_words( train["Tweets"][0])
-# print clean_review
 
 num_reviews = train["Tweets"].size
 
@@ -47,19 +42,15 @@ for i in xrange (0, num_reviews ):
 ## Replace clean_train_reviews with words with large usefulness??
 
 vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
+train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
 
-train_data_features = vectorizer.fit_transform(clean_train_reviews)
-
-train_data_features = train_data_features.toarray()
-
-vocab = vectorizer.get_feature_names()
+# Implement TF-IDF weighting
+tf_transformer = TfidfTransformer(use_idf=False).fit(train_data_features)
+train_tf = tf_transformer.transform(train_data_features)
 
 ########################################################################################################################
 # Calculate vector for Author 1
 test_h = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
-
-print test_h.shape
-print test_h.columns.values
 
 num_reviews = len(test_h["Tweets"])
 clean_test_h = []
@@ -70,17 +61,17 @@ for i in xrange (0, num_reviews ):
     clean_hill = review_to_words( test_h["Tweets"][i])
     clean_test_h.append( clean_hill )
 
-test_hill_features = vectorizer.transform(clean_test_h)
-test_hill_features = test_hill_features.toarray()
+test_hill_features = vectorizer.transform(clean_test_h).toarray()
+
+# Implement TF-IDF weighting
+tf_transformer_hill = TfidfTransformer(use_idf=False).fit(test_hill_features)
+train_tf_hill = tf_transformer.transform(test_hill_features)
 
 np.savetxt("foo.csv", test_hill_features, delimiter=",")
 
 ########################################################################################################################
 # Calculate vector for Author 2
 test_t = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
-
-print test_t.shape
-print test_t.columns.values
 
 num_reviews = len(test_t["Tweets"])
 clean_test_t = []
@@ -91,8 +82,12 @@ for i in xrange (0, num_reviews ):
     clean_trump = review_to_words( test_t["Tweets"][i])
     clean_test_t.append( clean_trump )
 
-test_trump_features = vectorizer.transform(clean_test_t)
-test_trump_features = test_trump_features.toarray()
+test_trump_features = vectorizer.transform(clean_test_t).toarray()
+
+# Implement TF-IDF weighting
+tf_transformer_trump = TfidfTransformer(use_idf=False).fit(test_trump_features)
+train_tf_trump = tf_transformer.transform(test_trump_features)
+
 
 np.savetxt("foo2.csv", test_trump_features, delimiter=",")
 
