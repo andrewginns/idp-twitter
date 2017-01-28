@@ -3,6 +3,7 @@ import pandas as pd
 import re
 import warnings
 import csv
+import pickle
 
 from Tkinter import *
 from bs4 import BeautifulSoup
@@ -29,15 +30,8 @@ def review_to_words( raw_review ):
 
 ########################################################################################################################
 # Calculation of vector V #
-train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
-# train = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-num_reviews = train["Tweets"].size
-
-clean_train_reviews = []
-
-for i in xrange (0, num_reviews ):
-    clean_train_reviews.append( review_to_words( train["Tweets"][i] ))
+clean_train_reviews = pickle.load( open( "V.p", "rb" ) )
 
 vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
 train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray

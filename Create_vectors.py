@@ -6,6 +6,7 @@ import bs4
 import sklearn
 import numpy as np
 import warnings
+import pickle
 
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
@@ -27,7 +28,8 @@ def review_to_words( raw_review ):
 
         return ( " ".join( meaningful_words ))
 
-
+########################################################################################################################
+# Calculation of vector V #
 train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
 
 num_reviews = train["Tweets"].size
@@ -39,6 +41,7 @@ for i in xrange (0, num_reviews ):
         print "Tweet %d of %d\n" % ( i+1, num_reviews )
     clean_train_reviews.append( review_to_words( train["Tweets"][i] ))
 
+pickle.dump( clean_train_reviews, open( "V.p", "wb" ) )
 ## Replace clean_train_reviews with words with large usefulness??
 
 vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
