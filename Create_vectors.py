@@ -27,7 +27,10 @@ def review_to_words( raw_review ):
         meaningful_words = [w for w in words if not w in stops]
 
         return ( " ".join( meaningful_words ))
-
+########################################################################################################################
+# Options #
+# Set option = 1 if you want to create a .csv of tf-idf scores for each tweet in the corpus
+option = 0
 ########################################################################################################################
 # Calculation of vector V #
 train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
@@ -51,46 +54,47 @@ train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
 tf_transformer = TfidfTransformer(use_idf=False).fit(train_data_features)
 train_tf = tf_transformer.transform(train_data_features)
 
+if option ==1:
 ########################################################################################################################
-# Calculate vector for Author 1
-test_h = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
+    # Calculate vector for Author 1
+    test_h = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-num_reviews = len(test_h["Tweets"])
-clean_test_h = []
+    num_reviews = len(test_h["Tweets"])
+    clean_test_h = []
 
-for i in xrange (0, num_reviews ):
-    if( (i+1)%1000 == 0 ):
-        print "Tweet %d of %d\n" % ( i+1, num_reviews )
-    clean_hill = review_to_words( test_h["Tweets"][i])
-    clean_test_h.append( clean_hill )
+    for i in xrange (0, num_reviews ):
+        if( (i+1)%1000 == 0 ):
+            print "Tweet %d of %d\n" % ( i+1, num_reviews )
+        clean_hill = review_to_words( test_h["Tweets"][i])
+        clean_test_h.append( clean_hill )
 
-test_hill_features = vectorizer.transform(clean_test_h).toarray()
+    test_hill_features = vectorizer.transform(clean_test_h).toarray()
 
-# Implement TF-IDF weighting
-tf_transformer_hill = TfidfTransformer(use_idf=False).fit(test_hill_features)
-train_tf_hill = tf_transformer.transform(test_hill_features)
+    # Implement TF-IDF weighting
+    tf_transformer_hill = TfidfTransformer(use_idf=False).fit(test_hill_features)
+    train_tf_hill = tf_transformer.transform(test_hill_features)
 
-np.savetxt("foo.csv", test_hill_features, delimiter=",")
+    np.savetxt("foo.csv", test_hill_features, delimiter=",")
 
 ########################################################################################################################
-# Calculate vector for Author 2
-test_t = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
+    # Calculate vector for Author 2
+    test_t = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-num_reviews = len(test_t["Tweets"])
-clean_test_t = []
+    num_reviews = len(test_t["Tweets"])
+    clean_test_t = []
 
-for i in xrange (0, num_reviews ):
-    if( (i+1)%1000 == 0 ):
-        print "Tweet %d of %d\n" % ( i+1, num_reviews )
-    clean_trump = review_to_words( test_t["Tweets"][i])
-    clean_test_t.append( clean_trump )
+    for i in xrange (0, num_reviews ):
+        if( (i+1)%1000 == 0 ):
+            print "Tweet %d of %d\n" % ( i+1, num_reviews )
+        clean_trump = review_to_words( test_t["Tweets"][i])
+        clean_test_t.append( clean_trump )
 
-test_trump_features = vectorizer.transform(clean_test_t).toarray()
+    test_trump_features = vectorizer.transform(clean_test_t).toarray()
 
-# Implement TF-IDF weighting
-tf_transformer_trump = TfidfTransformer(use_idf=False).fit(test_trump_features)
-train_tf_trump = tf_transformer.transform(test_trump_features)
+    # Implement TF-IDF weighting
+    tf_transformer_trump = TfidfTransformer(use_idf=False).fit(test_trump_features)
+    train_tf_trump = tf_transformer.transform(test_trump_features)
 
 
-np.savetxt("foo2.csv", test_trump_features, delimiter=",")
+    np.savetxt("foo2.csv", test_trump_features, delimiter=",")
 

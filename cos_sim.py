@@ -30,7 +30,6 @@ def review_to_words( raw_review ):
 
 ########################################################################################################################
 # Calculation of vector V #
-
 clean_train_reviews = pickle.load( open( "V.p", "rb" ) )
 
 vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
@@ -48,38 +47,50 @@ train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray
 
 ########################################################################################################################
 # Calculation of input vector #
-test_i = pd.read_csv("Input.csv", header=0, delimiter="\t", quoting=3)
+exit = 0
+while exit == 0:
+    with open('Input.csv', 'wb') as csvfile:
+        w = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_NONE)
+        w.writerow(["Tweet"])
 
-num_reviews = len(test_i["Tweet"])
-clean_test_i = []
+        t = csv.writer(csvfile, delimiter = "\t", quoting=csv.QUOTE_ALL)
+        input_vec = raw_input("Enter your tweet to test, type 'enter' to exit: ")
+        if input_vec == "exit":
+            exit = 1
+        else:
+            t.writerow([input_vec])
 
-for i in xrange (0, num_reviews ):
-    clean_hill = review_to_words( test_i["Tweet"][i])
-    clean_test_i.append( clean_hill )
+    test_i = pd.read_csv("Input.csv", header=0, delimiter="\t", quoting=3)
+    num_reviews = len(test_i["Tweet"])
+    clean_test_i = []
 
-test_input_features = vectorizer.transform(clean_test_i)
-test_input_features = test_input_features.toarray()
+    for i in xrange (0, num_reviews ):
+        clean_input = review_to_words( test_i["Tweet"][i])
+        clean_test_i.append( clean_input )
 
-np.savetxt("Input_vector.csv", test_input_features, delimiter=",")
-new_vec = np.genfromtxt("Input_vector.csv", delimiter=",")
+    test_input_features = vectorizer.transform(clean_test_i)
+    test_input_features = test_input_features.toarray()
 
-########################################################################################################################
-# Calculation of cosine similarity of new Tweet #
-trump = np.genfromtxt("trump_tf_idf.csv", delimiter=",")
-hillary = np.genfromtxt("hill_tf_idf.csv", delimiter=",")
+    np.savetxt("Input_vector.csv", test_input_features, delimiter=",")
+    new_vec = np.genfromtxt("Input_vector.csv", delimiter=",")
 
-trump_sim = 1-spatial.distance.cosine(trump, new_vec)
-hill_sim = 1-spatial.distance.cosine(hillary, new_vec)
+    ########################################################################################################################
+    # Calculation of cosine similarity of new Tweet #
+    trump = np.genfromtxt("trump_tf_idf.csv", delimiter=",")
+    hillary = np.genfromtxt("hill_tf_idf.csv", delimiter=",")
 
-print trump_sim
-print hill_sim
+    trump_sim = 1-spatial.distance.cosine(trump, new_vec)
+    hill_sim = 1-spatial.distance.cosine(hillary, new_vec)
 
-if trump_sim>hill_sim:
-    print "You tweet like Trump"
-    image = Image.open('Trump_pic.jpeg')
-    image.show()
+    print 'Trump cosine similarity: ',trump_sim
+    print 'Hillary cosine similarity: ',hill_sim
 
-else:
-    print "You tweet like Hillary"
-    image = Image.open('hill_pic.jpg')
-    image.show()
+    if trump_sim>hill_sim:
+        print "You tweet like Trump"
+        image = Image.open('Trump_pic.jpeg')
+        image.show()
+
+    else:
+        print "You tweet like Hillary"
+        image = Image.open('hill_pic.jpg')
+        image.show()

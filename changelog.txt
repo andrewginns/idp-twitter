@@ -1,3 +1,11 @@
+Changelog Version 1.2
+
+Looping of the program until 'exit' is entered
+Added input of tweets from the console rather than requiring editing of a .csv file
+Added option in 'Create_vectors.py' to not create tf-idf .csv for all Trump/Hillary tweets
+Changed some variable names for coherence
+Added more explanation in output of results
+
 Changelog Version 1.1.1
 
 Use of pickle to avoid running the same code multiple times
