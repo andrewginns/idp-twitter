@@ -27,6 +27,11 @@ def review_to_words( raw_review ):
         meaningful_words = [w for w in words if not w in stops]
 
         return ( " ".join( meaningful_words ))
+def run():
+    master.quit()
+def quit():
+    master.destroy()
+
 
 ########################################################################################################################
 # Calculation of vector V #
@@ -46,15 +51,33 @@ train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray
 # print vectorizer.get_feature_names()
 
 ########################################################################################################################
+# GUI creation #
+master = Tk()
+master.title("Author Recognition Tool")
+master.geometry("500x400")
+master.resizable
+Label(master, text="Enter your Tweet here:").grid(row=0)
+
+e1 = Text(master)
+
+e1.grid(row=0, column=1)
+
+Button(master, text='Analyse', command=run).grid(row=3, column=0, sticky=W, pady=4)
+Button(master, text='Quit', command=quit).grid(row=3, column=1, sticky=W, pady=4)
+
+########################################################################################################################
 # Calculation of input vector #
 exit = 0
 while exit == 0:
+    mainloop()
+
     with open('Input.csv', 'wb') as csvfile:
         w = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_NONE)
         w.writerow(["Tweet"])
 
         t = csv.writer(csvfile, delimiter = "\t", quoting=csv.QUOTE_ALL)
-        input_vec = raw_input("Enter your tweet to test, type 'enter' to exit: ")
+        input_vec = e1.get("1.0", 'end-1c')
+        # input_vec = raw_input("Enter your tweet to test, type 'enter' to exit: ")
         if input_vec == "exit":
             exit = 1
         else:
