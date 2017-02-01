@@ -32,7 +32,10 @@ def run():
 def quit():
     master.destroy()
 
-
+########################################################################################################################
+# Options #
+clear_after_submit = 1
+GUI = 0
 ########################################################################################################################
 # Calculation of vector V #
 clean_train_reviews = pickle.load( open( "V.p", "rb" ) )
@@ -48,40 +51,49 @@ train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray
 # vectorizer = DictVectorizer()
 # vectorizer.fit_transform(vocab).toarray()
 
-# print vectorizer.get_feature_names()
+print vectorizer.get_feature_names()
 
 ########################################################################################################################
 # GUI creation #
-master = Tk()
-master.title("Author Recognition Tool")
-master.geometry("500x400")
-master.resizable
-Label(master, text="Enter your Tweet here:").grid(row=0)
+if GUI ==1:
+    master = Tk()
+    master.title("Author Recognition Tool")
+    master.geometry("500x400")
+    master.resizable
+    Label(master, text="Enter your Tweet here:").grid(row=0)
 
-e1 = Text(master)
+    e1 = Text(master)
 
-e1.grid(row=0, column=1)
+    e1.grid(row=0, column=1)
 
-Button(master, text='Analyse', command=run).grid(row=3, column=0, sticky=W, pady=4)
-Button(master, text='Quit', command=quit).grid(row=3, column=1, sticky=W, pady=4)
+    Button(master, text='Analyse', command=run).grid(row=3, column=0, sticky=W, pady=4)
+    Button(master, text='Quit', command=quit).grid(row=3, column=1, sticky=W, pady=4)
+
 
 ########################################################################################################################
 # Calculation of input vector #
 exit = 0
 while exit == 0:
-    mainloop()
+    if GUI ==1:
+        mainloop()
 
     with open('Input.csv', 'wb') as csvfile:
         w = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_NONE)
         w.writerow(["Tweet"])
 
         t = csv.writer(csvfile, delimiter = "\t", quoting=csv.QUOTE_ALL)
-        input_vec = e1.get("1.0", 'end-1c')
-        # input_vec = raw_input("Enter your tweet to test, type 'enter' to exit: ")
+        if GUI ==1:
+            input_vec = e1.get("1.0", 'end-1c')
+        else:
+            input_vec = raw_input("Enter your tweet to test, type 'exit' to exit: ")
+
         if input_vec == "exit":
             exit = 1
         else:
             t.writerow([input_vec])
+
+    if clear_after_submit == 1 and GUI ==1:
+        e1.delete('1.0',END)
 
     test_i = pd.read_csv("Input.csv", header=0, delimiter="\t", quoting=3)
     num_reviews = len(test_i["Tweet"])
@@ -97,8 +109,8 @@ while exit == 0:
     np.savetxt("Input_vector.csv", test_input_features, delimiter=",")
     new_vec = np.genfromtxt("Input_vector.csv", delimiter=",")
 
-    ########################################################################################################################
-    # Calculation of cosine similarity of new Tweet #
+########################################################################################################################
+# Calculation of cosine similarity of new Tweet #
     trump = np.genfromtxt("trump_tf_idf.csv", delimiter=",")
     hillary = np.genfromtxt("hill_tf_idf.csv", delimiter=",")
 
