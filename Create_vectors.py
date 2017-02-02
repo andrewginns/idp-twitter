@@ -11,7 +11,7 @@ import pickle
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 def review_to_words( raw_review ):
     with warnings.catch_warnings():
@@ -30,9 +30,12 @@ def review_to_words( raw_review ):
 ########################################################################################################################
 # Options #
 # Set option = 1 if you want to create a .csv of tf-idf scores for each tweet in the corpus
-option = 0
+option = 1
+TF_IDF = 0
+pickle.dump( TF_IDF, open( "setting_tfidf.p", "wb" ) )
 ########################################################################################################################
 # Calculation of vector V #
+print "Creating vocabulary"
 train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
 
 num_reviews = train["Tweets"].size
@@ -41,21 +44,26 @@ clean_train_reviews = []
 
 for i in xrange (0, num_reviews ):
     if( (i+1)%1000 == 0 ):
-        print "Tweet %d of %d\n" % ( i+1, num_reviews )
+        print "Creating vocab from Tweet %d of %d\n" % ( i+1, num_reviews )
     clean_train_reviews.append( review_to_words( train["Tweets"][i] ))
 
 pickle.dump( clean_train_reviews, open( "V.p", "wb" ) )
-## Replace clean_train_reviews with words with large usefulness??
 
-vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
-train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
+if TF_IDF == 0:
+# Standard bag of words vector based on 'Bag of Words' approach
+    print "Using Term Frequency (TF) for vocabulary"
+    vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
+    train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
 
-# Implement TF-IDF weighting
-tf_transformer = TfidfTransformer(use_idf=False).fit(train_data_features)
-train_tf = tf_transformer.transform(train_data_features)
+else:
+# Implement TF-IDF weighting vectorizer
+    print "Using TF-IDF weighting for vocabulary"
+    vectorizer = TfidfVectorizer(min_df=1)
+    train_data_features = vectorizer.fit_transform(clean_train_reviews)
 
 if option ==1:
 ########################################################################################################################
+    print "Creating author vectors"
     # Calculate vector for Author 1
     test_h = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
 
@@ -64,17 +72,24 @@ if option ==1:
 
     for i in xrange (0, num_reviews ):
         if( (i+1)%1000 == 0 ):
-            print "Tweet %d of %d\n" % ( i+1, num_reviews )
+            print "Processing Author 1, Tweet %d of %d\n" % ( i+1, num_reviews )
         clean_hill = review_to_words( test_h["Tweets"][i])
         clean_test_h.append( clean_hill )
 
-    test_hill_features = vectorizer.transform(clean_test_h).toarray()
+    if TF_IDF == 0:
+    # Bag of words tf count
+        test_hill_features = vectorizer.transform(clean_test_h).toarray()
+        h_avg = np.mean(test_hill_features, axis=0)
+        # np.savetxt("foo.csv", test_hill_features, delimiter=",")
+        pickle.dump(h_avg, open("h.p", "wb"))
 
+    else:
     # Implement TF-IDF weighting
-    tf_transformer_hill = TfidfTransformer(use_idf=False).fit(test_hill_features)
-    train_tf_hill = tf_transformer.transform(test_hill_features)
+        train_tf_hill = vectorizer.transform(clean_test_h)
+        h_avg_tfidf = np.mean(train_tf_hill, axis=0)
 
-    np.savetxt("foo.csv", test_hill_features, delimiter=",")
+        # np.savetxt("foo_idf.csv", h_avg_tfidf, delimiter=",")
+        pickle.dump( h_avg_tfidf, open( "h_tfidf.p", "wb" ) )
 
 ########################################################################################################################
     # Calculate vector for Author 2
@@ -85,16 +100,22 @@ if option ==1:
 
     for i in xrange (0, num_reviews ):
         if( (i+1)%1000 == 0 ):
-            print "Tweet %d of %d\n" % ( i+1, num_reviews )
+            print "Processing Author 2, Tweet %d of %d\n" % ( i+1, num_reviews )
         clean_trump = review_to_words( test_t["Tweets"][i])
         clean_test_t.append( clean_trump )
 
-    test_trump_features = vectorizer.transform(clean_test_t).toarray()
+    if TF_IDF == 0:
+    # Bag of words tf count
+        test_trump_features = vectorizer.transform(clean_test_t).toarray()
+        t_avg = np.mean(test_trump_features, axis=0)
+        # np.savetxt("foo2.csv", test_trump_features, delimiter=",")
+        pickle.dump(t_avg, open("t.p", "wb"))
 
-    # Implement TF-IDF weighting
-    tf_transformer_trump = TfidfTransformer(use_idf=False).fit(test_trump_features)
-    train_tf_trump = tf_transformer.transform(test_trump_features)
+    else:
+        train_tf_trump = vectorizer.transform(clean_test_t)
+        t_avg_tfidf = np.mean(train_tf_trump, axis=0)
 
+        # np.savetxt("foo2_idf.csv", t_avg_tfidf, delimiter=",")
+        pickle.dump(t_avg_tfidf, open("t_tfidf.p", "wb"))
 
-    np.savetxt("foo2.csv", test_trump_features, delimiter=",")
-
+print "All selected vectors created"
