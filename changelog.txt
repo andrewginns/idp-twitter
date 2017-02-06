@@ -1,3 +1,13 @@
+Changelog Version 1.4.5
+
+Changed pickle for cpickle to increase speed
+Added Hashbang to 'Create_vectors.py'
+Added output for no similarity
+Added automation toggle
+Tweaked GUI window so that full text entry field is shown
+Cleaned up code-style
+Changed all csv header titles to 'Tweet' instead of 'Tweets'
+
 Changelog Version 1.4
 
 -Create_vectors.py changes:

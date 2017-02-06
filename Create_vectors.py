@@ -1,12 +1,11 @@
+#!/usr/bin/env python2.7
 import pandas as pd
 import nltk
 # nltk.download()
 import re
-import bs4
-import sklearn
 import numpy as np
 import warnings
-import pickle
+import cPickle as pickle
 
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
@@ -31,28 +30,32 @@ def review_to_words( raw_review ):
 # Options #
 # Set option = 1 if you want to create a .csv of tf-idf scores for each tweet in the corpus
 option = 1
-TF_IDF = 0
+TF_IDF = 1
+features = 5000
 pickle.dump( TF_IDF, open( "setting_tfidf.p", "wb" ) )
+pickle.dump( features, open( "features.p", "wb" ) )
 ########################################################################################################################
 # Calculation of vector V #
 print "Creating vocabulary"
 train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
+# train = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
+# train = pd.read_csv("combined_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-num_reviews = train["Tweets"].size
+num_reviews = train["Tweet"].size
 
 clean_train_reviews = []
 
 for i in xrange (0, num_reviews ):
     if( (i+1)%1000 == 0 ):
         print "Creating vocab from Tweet %d of %d\n" % ( i+1, num_reviews )
-    clean_train_reviews.append( review_to_words( train["Tweets"][i] ))
+    clean_train_reviews.append( review_to_words( train["Tweet"][i] ))
 
 pickle.dump( clean_train_reviews, open( "V.p", "wb" ) )
 
 if TF_IDF == 0:
 # Standard bag of words vector based on 'Bag of Words' approach
     print "Using Term Frequency (TF) for vocabulary"
-    vectorizer = CountVectorizer(analyzer= "word", tokenizer= None, preprocessor= None, stop_words= None, max_features= 5000)
+    vectorizer = CountVectorizer(analyzer= "word", tokenizer=None, preprocessor=None, stop_words=None, max_features=features)
     train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
 
 else:
@@ -67,13 +70,13 @@ if option ==1:
     # Calculate vector for Author 1
     test_h = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-    num_reviews = len(test_h["Tweets"])
+    num_reviews = len(test_h["Tweet"])
     clean_test_h = []
 
     for i in xrange (0, num_reviews ):
         if( (i+1)%1000 == 0 ):
             print "Processing Author 1, Tweet %d of %d\n" % ( i+1, num_reviews )
-        clean_hill = review_to_words( test_h["Tweets"][i])
+        clean_hill = review_to_words( test_h["Tweet"][i])
         clean_test_h.append( clean_hill )
 
     if TF_IDF == 0:
@@ -95,13 +98,13 @@ if option ==1:
     # Calculate vector for Author 2
     test_t = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
 
-    num_reviews = len(test_t["Tweets"])
+    num_reviews = len(test_t["Tweet"])
     clean_test_t = []
 
     for i in xrange (0, num_reviews ):
         if( (i+1)%1000 == 0 ):
             print "Processing Author 2, Tweet %d of %d\n" % ( i+1, num_reviews )
-        clean_trump = review_to_words( test_t["Tweets"][i])
+        clean_trump = review_to_words( test_t["Tweet"][i])
         clean_test_t.append( clean_trump )
 
     if TF_IDF == 0:
