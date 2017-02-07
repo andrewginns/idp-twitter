@@ -5,7 +5,6 @@ import warnings
 import csv
 import cPickle as pickle
 import math
-import time
 
 from Tkinter import *
 from bs4 import BeautifulSoup
@@ -50,6 +49,74 @@ def weighting(tfidf, num):
     else:
         print "Using TF-IDF weighting for vectors"
     return
+
+
+def show(a):
+    if a == 0:
+        print "No similarity!"
+        image = Image.open('Broken.jpg')
+
+    if a == 1:
+        print "You tweet like Trump"
+        image = Image.open('Trump_pic.jpeg')
+
+    if a == 2:
+        print "You tweet like Hillary"
+        image = Image.open('hill_pic.jpg')
+
+    image.show()
+
+
+def sim_calc(t, h, i, cos):
+
+    if cos == 1:
+        print 'Cosine similarity, bigger is better'
+        trump_sim = 1 - spatial.distance.cosine(trump, new_vec)
+        hill_sim = 1 - spatial.distance.cosine(hillary, new_vec)
+        print 'Trump similarity: ', trump_sim
+        print 'Hillary similarity: ', hill_sim
+        sum_i = 1
+
+    else:
+        if TF_IDF == 0:
+            print 'Please create TF-IDF vectors first in Create_vectors.py'
+            exit()
+
+        print 'TF-IDF similarity, smaller is better'
+        sum_i = np.sum(50000*new_vec)  # Multiplication by 50k to ensure vector sum register as non-zero
+        sum_h = np.sum(50000*hillary)
+        sum_t = np.sum(50000*trump)
+
+        trump_sim = abs(sum_i - sum_t)
+        hill_sim = abs(sum_i - sum_h)
+        print 'Trump similarity: ', hill_sim
+        print 'Hillary similarity: ', trump_sim
+
+    if math.isnan(trump_sim) or sum_i == 0:
+        author = 0
+
+    else:
+        if trump_sim > hill_sim:
+            author = 1
+
+        if hill_sim > trump_sim:
+            author = 2
+
+    show(author)
+
+
+def load (TF):
+    if TF == 0:
+        t1 = pickle.load(open("t.p", "rb"))
+        h1 = pickle.load(open("h.p", "rb"))
+
+    else:
+        t1 = pickle.load(open("t_tfidf.p", "rb"))
+        h1 = pickle.load(open("h_tfidf.p", "rb"))
+
+    return t1, h1
+
+
 ########################################################################################################################
 """ Options
     Toggling the program between GUI and CLI.
@@ -59,10 +126,11 @@ def weighting(tfidf, num):
 """
 GUI = 1
 clear_after_submit = 1
-TF_IDF = pickle.load( open( "setting_tfidf.p", "rb" ))
-# TF_IDF = 1
-features = pickle.load( open( "features.p", "rb" ))
 automate = 0
+cosine = 1
+TF_IDF = pickle.load(open("setting_tfidf.p", "rb"))
+# TF_IDF = 1
+features = pickle.load(open("features.p", "rb"))
 
 ########################################################################################################################
 """ Calculation of vector V
@@ -74,7 +142,8 @@ clean_train_reviews = pickle.load(open("V.p", "rb"))
 
 if TF_IDF == 0:
     # Standard bag of words vector based on 'Bag of Words' approach
-    vectorizer = CountVectorizer(analyzer="word", tokenizer=None, preprocessor=None, stop_words=None, max_features=features)
+    vectorizer = CountVectorizer(analyzer="word", tokenizer=None,
+                                 preprocessor=None, stop_words=None, max_features=features)
     train_data_features = vectorizer.fit_transform(clean_train_reviews).toarray()
 
 else:
@@ -90,10 +159,11 @@ else:
 if GUI == 1:
     master = Tk()
     master.title("Author Recognition Tool - Andrew Ginns IDP")
-    master.geometry("720x400")
+    master.geometry("720x410")
 
     Label(master, text="Enter your Tweet here:").grid(row=0)
     Label(master, text="TF-IDF status: %s" % TF_IDF).grid(row=1)
+    Label(master, text="Cosine status: %s" % cosine).grid(row=2)
 
     e1 = Text(master)
     e1.grid(row=0, column=1)
@@ -150,35 +220,10 @@ while end == 0 and automate == 0:
         new_vec = np.mean(train_tf_input, axis=0)
 
 
-# Classifier using cosine similarity of new Tweet #
-    if TF_IDF == 0:
-        trump = pickle.load(open("t.p", "rb"))
-        hillary = pickle.load(open("h.p", "rb"))
+# Classifier of new Tweet #
+    trump, hillary = load(TF_IDF)   # Loads author vectors depending on vector weighting required
+    sim_calc(trump, hillary, new_vec, cosine)  # Runs either cosine or TF-IDF similarity
 
-    else:
-        trump = pickle.load(open("t_tfidf.p", "rb"))
-        hillary = pickle.load(open("h_tfidf.p", "rb"))
-
-    trump_sim = 1-spatial.distance.cosine(trump, new_vec)
-    hill_sim = 1-spatial.distance.cosine(hillary, new_vec)
-
-    print 'Trump cosine similarity: ', trump_sim
-    print 'Hillary cosine similarity: ', hill_sim
-
-    if math.isnan(trump_sim):
-        print "No similarity!"
-        image = Image.open('Broken.jpg')
-        image.show()
-
-    if trump_sim > hill_sim:
-        print "You tweet like Trump"
-        image = Image.open('Trump_pic.jpeg')
-        image.show()
-
-    if hill_sim > trump_sim:
-        print "You tweet like Hillary"
-        image = Image.open('hill_pic.jpg')
-        image.show()
 
 ########################################################################################################################
 """ Automation
@@ -189,20 +234,21 @@ if automate == 1:
     a = 3
     while a >=1:
 
-        u = 0
-        t = 0
-        h = 0
+        u, t, h = 0
 
         if a == 3:
-            test_i = pd.read_csv("new_realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3, encoding='utf8')
+            test_i = pd.read_csv("new_realDonaldTrump_tweets.csv", header=0,
+                                 delimiter="\t", quoting=3, encoding='utf8')
             print '\n Testing for Trump Tweets'
 
         if a == 2:
-            test_i = pd.read_csv("older_realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3, encoding='utf8')
+            test_i = pd.read_csv("older_realDonaldTrump_tweets.csv", header=0,
+                                 delimiter="\t", quoting=3, encoding='utf8')
             print '\n Testing for old Trump Tweets'
 
         if a == 1:
-            test_i = pd.read_csv("new_HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3, encoding='utf8')
+            test_i = pd.read_csv("new_HillaryClinton_tweets.csv", header=0,
+                                 delimiter="\t", quoting=3, encoding='utf8')
             print '\n Testing for Hillary Tweets'
 
         num_reviews = len(test_i["Tweet"])
@@ -231,18 +277,21 @@ if automate == 1:
                 new_vec = np.mean(train_tf_input, axis=0)
 
     # Comparing cosine similarity
-            if TF_IDF == 0:
-                trump = pickle.load(open("t.p", "rb"))
-                hillary = pickle.load(open("h.p", "rb"))
+            trump, hillary = load(TF_IDF)
+            if cosine == 1:
+                trump_sim = 1 - spatial.distance.cosine(trump, new_vec)
+                hill_sim = 1 - spatial.distance.cosine(hillary, new_vec)
+                sum_i = 1
 
             else:
-                trump = pickle.load(open("t_tfidf.p", "rb"))
-                hillary = pickle.load(open("h_tfidf.p", "rb"))
+                sum_i = np.sum(50000 * new_vec)  # Multiplication by 50k to ensure vector sum register as non-zero
+                sum_h = np.sum(50000 * hillary)
+                sum_t = np.sum(50000 * trump)
 
-            trump_sim = 1 - spatial.distance.cosine(trump, new_vec)
-            hill_sim = 1 - spatial.distance.cosine(hillary, new_vec)
+                trump_sim = abs(sum_i - sum_t)
+                hill_sim = abs(sum_i - sum_h)
 
-            if math.isnan(trump_sim):
+            if math.isnan(trump_sim) or sum_i == 0:
                 u += 1
 
             if trump_sim > hill_sim:
@@ -252,8 +301,9 @@ if automate == 1:
                 h += 1
 
         total = u + t + h
-        weighting(TF_IDF, features)
+        a -= 1
+
+        weighting(TF_IDF, features) # Prints weighting used by vectors
         print "Number unclassified = %d, %d percent" % (u, percentage(u, total))
         print "Number of Trump tweets = %d, %d percent" % (t, percentage(t, total))
         print "Number of Hillary tweets = %d, %d percent" % (h, percentage(h, total))
-        a -= 1
