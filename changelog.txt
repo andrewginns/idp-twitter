@@ -1,3 +1,7 @@
+Changelog Version 1.5.1
+
+Created a Twitter bot using the code (see
+
 Changelog Version 1.5
 
 Cleaned up 'Create_vectors.py' code-style

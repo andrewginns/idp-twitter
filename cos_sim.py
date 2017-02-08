@@ -71,8 +71,8 @@ def sim_calc(t, h, i, cos):
 
     if cos == 1:
         print 'Cosine similarity, bigger is better'
-        trump_sim = 1 - spatial.distance.cosine(trump, new_vec)
-        hill_sim = 1 - spatial.distance.cosine(hillary, new_vec)
+        trump_sim = 1 - spatial.distance.cosine(t, i)
+        hill_sim = 1 - spatial.distance.cosine(h, i)
         print 'Trump similarity: ', trump_sim
         print 'Hillary similarity: ', hill_sim
         sum_i = 1
@@ -83,9 +83,9 @@ def sim_calc(t, h, i, cos):
             exit()
 
         print 'TF-IDF similarity, smaller is better'
-        sum_i = np.sum(50000*new_vec)  # Multiplication by 50k to ensure vector sum register as non-zero
-        sum_h = np.sum(50000*hillary)
-        sum_t = np.sum(50000*trump)
+        sum_i = np.sum(50000*i)  # Multiplication by 50k to ensure vector sum register as non-zero
+        sum_h = np.sum(50000*h)
+        sum_t = np.sum(50000*t)
 
         trump_sim = abs(sum_i - sum_t)
         hill_sim = abs(sum_i - sum_h)
@@ -217,7 +217,8 @@ while end == 0 and automate == 0:
 
     else:
         train_tf_input = vectorizer.transform(clean_test_i)
-        new_vec = np.mean(train_tf_input, axis=0)
+        # new_vec = np.mean(train_tf_input, axis=0)
+        new_vec = train_tf_input.mean(axis=0)
 
 
 # Classifier of new Tweet #
@@ -274,7 +275,8 @@ if automate == 1:
 
             else:
                 train_tf_input = vectorizer.transform(clean_test_i)
-                new_vec = np.mean(train_tf_input, axis=0)
+                # new_vec = np.mean(train_tf_input, axis=0)
+                new_vec = train_tf_input.mean(axis=0)
 
     # Comparing cosine similarity
             trump, hillary = load(TF_IDF)
