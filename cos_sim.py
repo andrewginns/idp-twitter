@@ -10,6 +10,7 @@ from Tkinter import *
 from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import normalize
 from scipy import spatial
 from PIL import Image
 
@@ -31,12 +32,30 @@ def review_to_words(raw_review):
         return " ".join(meaningful_words)
 
 
+def create_GUI(master, setting, tstate, cstate):
+    if setting == 1:
+        master.title("Author Recognition Tool - Andrew Ginns IDP")
+        master.geometry("720x410")
+
+        Label(master, text="Enter your Tweet here:").grid(row=0)
+        Label(master, text="TF-IDF status: %s" % tstate).grid(row=1)
+        Label(master, text="Cosine status: %s" % cstate).grid(row=2)
+
+        input_text = Text(master)
+        input_text.grid(row=0, column=1)
+
+        master.bind('<Return>', enter)
+        Button(master, text='Quit', command=stop).grid(row=3, column=1, sticky=W, pady=4)
+
+        return input_text
+
+
 def enter(event):
-    master.quit()
+    root.quit()
 
 
 def stop():
-    master.destroy()
+    root.destroy()
 
 
 def percentage(nom, denom):
@@ -67,45 +86,57 @@ def show(a):
     image.show()
 
 
-def sim_calc(t, h, i, cos):
-
+def sim_calc(auto, idf, t, h, i, cos, uncl, h_c, d_t):
+    # Cosine similarity
     if cos == 1:
-        print 'Cosine similarity, bigger is better'
         trump_sim = 1 - spatial.distance.cosine(t, i)
         hill_sim = 1 - spatial.distance.cosine(h, i)
-        print 'Trump similarity: ', trump_sim
-        print 'Hillary similarity: ', hill_sim
         sum_i = 1
 
+        if auto == 0:
+            print 'Cosine similarity, bigger is better'
+            print 'Trump similarity: ', trump_sim
+            print 'Hillary similarity: ', hill_sim
+    # TF-IDF similarity
     else:
-        if TF_IDF == 0:
+
+        if idf == 0:
             print 'Please create TF-IDF vectors first in Create_vectors.py'
             exit()
 
-        print 'TF-IDF similarity, smaller is better'
         sum_i = np.sum(50000*i)  # Multiplication by 50k to ensure vector sum register as non-zero
         sum_h = np.sum(50000*h)
         sum_t = np.sum(50000*t)
 
         trump_sim = abs(sum_i - sum_t)
         hill_sim = abs(sum_i - sum_h)
-        print 'Trump similarity: ', hill_sim
-        print 'Hillary similarity: ', trump_sim
 
+        if auto == 0:
+            print 'TF-IDF similarity, smaller is better'
+            print 'Trump similarity: ', hill_sim
+            print 'Hillary similarity: ', trump_sim
+    # If the input tweet doesn't have a bag of words vector
     if math.isnan(trump_sim) or sum_i == 0:
         author = 0
-
+        uncl += 1
+    # Attributing the results to the corresponding author
     else:
         if trump_sim > hill_sim:
             author = 1
+            h_c += 1
 
         if hill_sim > trump_sim:
             author = 2
+            d_t += 1
+    # Display author classification
+    if auto == 0:
+        show(author)
+    # Return author classification to automation code
+    else:
+        return uncl, h_c, d_t
 
-    show(author)
 
-
-def load (TF):
+def load(TF):
     if TF == 0:
         t1 = pickle.load(open("t.p", "rb"))
         h1 = pickle.load(open("h.p", "rb"))
@@ -117,6 +148,51 @@ def load (TF):
     return t1, h1
 
 
+def euclideanDistance(instance1, instance2, length):
+    distance = 0
+    for x in range(length):
+        distance += pow((instance1[x] - instance2[x]), 2)
+    return math.sqrt(distance)
+
+
+def getNeighbors(trainingSet, testInstance, k):
+    distances = []
+    length = len(testInstance) - 1
+    for x in range(len(trainingSet)):
+        dist = euclideanDistance(testInstance, trainingSet[x], length)
+        distances.append((trainingSet[x], dist))
+    distances.sort(key=operator.itemgetter(1))
+    neighbors = []
+    for x in range(k):
+        neighbors.append(distances[x][0])
+    return neighbors
+
+
+def getResponse(neighbors):
+    classVotes = {}
+    for x in range(len(neighbors)):
+        response = neighbors[x][-1]
+        if response in classVotes:
+            classVotes[response] += 1
+        else:
+            classVotes[response] = 1
+    sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
+    return sortedVotes[0][0]
+
+
+def getAccuracy(testSet, predictions):
+    correct = 0
+    for x in range(len(testSet)):
+        if testSet[x][-1] == predictions[x]:
+            correct += 1
+            print 'Match'
+    return (correct / float(len(testSet))) * 100.0
+
+
+def sim_calc2():
+    print'k-NN similarity classifier'
+
+
 ########################################################################################################################
 """ Options
     Toggling the program between GUI and CLI.
@@ -124,12 +200,13 @@ def load (TF):
     Automation toggle.
     0 for off,  1 for on.
 """
-GUI = 1
+GUI = 0
 clear_after_submit = 1
 automate = 0
-cosine = 1
+cosine = 0
+kNN = 0
+
 TF_IDF = pickle.load(open("setting_tfidf.p", "rb"))
-# TF_IDF = 1
 features = pickle.load(open("features.p", "rb"))
 
 ########################################################################################################################
@@ -156,20 +233,8 @@ else:
     Text widget provides an input area for tweets, assigns the input of tweets to the 'Return' key.
     Creates a 'Quit button for ending the program process.
 """
-if GUI == 1:
-    master = Tk()
-    master.title("Author Recognition Tool - Andrew Ginns IDP")
-    master.geometry("720x410")
-
-    Label(master, text="Enter your Tweet here:").grid(row=0)
-    Label(master, text="TF-IDF status: %s" % TF_IDF).grid(row=1)
-    Label(master, text="Cosine status: %s" % cosine).grid(row=2)
-
-    e1 = Text(master)
-    e1.grid(row=0, column=1)
-
-    master.bind('<Return>', enter)
-    Button(master, text='Quit', command=stop).grid(row=3, column=1, sticky=W, pady=4)
+root = Tk()
+e1 = create_GUI(root, GUI, TF_IDF, cosine)
 
 ########################################################################################################################
 """ Vector calculations
@@ -178,6 +243,9 @@ if GUI == 1:
 """
 # Calculation of Input Vector #
 end = 0
+un = 0
+tru = 0
+hil = 0
 while end == 0 and automate == 0:
     if GUI == 1:
         mainloop()
@@ -223,7 +291,7 @@ while end == 0 and automate == 0:
 
 # Classifier of new Tweet #
     trump, hillary = load(TF_IDF)   # Loads author vectors depending on vector weighting required
-    sim_calc(trump, hillary, new_vec, cosine)  # Runs either cosine or TF-IDF similarity
+    sim_calc(automate, TF_IDF, trump, hillary, new_vec, cosine, un, hil, tru)  # Runs either cosine or TF-IDF similarity
 
 
 ########################################################################################################################
@@ -235,7 +303,9 @@ if automate == 1:
     a = 3
     while a >=1:
 
-        u, t, h = 0
+        un = 0
+        tru = 0
+        hil = 0
 
         if a == 3:
             test_i = pd.read_csv("new_realDonaldTrump_tweets.csv", header=0,
@@ -278,34 +348,14 @@ if automate == 1:
                 # new_vec = np.mean(train_tf_input, axis=0)
                 new_vec = train_tf_input.mean(axis=0)
 
-    # Comparing cosine similarity
+            # Comparing cosine similarity
             trump, hillary = load(TF_IDF)
-            if cosine == 1:
-                trump_sim = 1 - spatial.distance.cosine(trump, new_vec)
-                hill_sim = 1 - spatial.distance.cosine(hillary, new_vec)
-                sum_i = 1
+            un, tru, hil = sim_calc(automate, TF_IDF, trump, hillary, new_vec, cosine, un, hil, tru)
 
-            else:
-                sum_i = np.sum(50000 * new_vec)  # Multiplication by 50k to ensure vector sum register as non-zero
-                sum_h = np.sum(50000 * hillary)
-                sum_t = np.sum(50000 * trump)
-
-                trump_sim = abs(sum_i - sum_t)
-                hill_sim = abs(sum_i - sum_h)
-
-            if math.isnan(trump_sim) or sum_i == 0:
-                u += 1
-
-            if trump_sim > hill_sim:
-                t += 1
-
-            if hill_sim > trump_sim:
-                h += 1
-
-        total = u + t + h
+        total = un + tru + hil
         a -= 1
 
         weighting(TF_IDF, features) # Prints weighting used by vectors
-        print "Number unclassified = %d, %d percent" % (u, percentage(u, total))
-        print "Number of Trump tweets = %d, %d percent" % (t, percentage(t, total))
-        print "Number of Hillary tweets = %d, %d percent" % (h, percentage(h, total))
+        print "Number unclassified = %d, %d percent" % (un, percentage(un, total))
+        print "Number of Trump tweets = %d, %d percent" % (tru, percentage(tru, total))
+        print "Number of Hillary tweets = %d, %d percent" % (hil, percentage(hil, total))

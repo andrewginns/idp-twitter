@@ -1,6 +1,14 @@
+Changelog 1.5.5
+
+Implementation of k-Nearest neighbour (k-NN) classifier https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
+GUI creation moved into a function
+Modified similarity calculation similarity so that it is also used by the automation code
+Fixed automation crash
+Fixed automation of TF-IDF similarity swapping classification of authors
+
 Changelog Version 1.5.1
 
-Created a Twitter bot using the code (see
+Created a Twitter bot using the code (see https://github.com/andrewginns/idp-twitter-bot)
 
 Changelog Version 1.5
 

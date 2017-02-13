@@ -39,9 +39,9 @@ pickle.dump(features, open("features.p", "wb"))
 ########################################################################################################################
 # Calculation of vector V #
 print "Creating vocabulary"
-# train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
+train = pd.read_csv("realDonaldTrump_tweets.csv", header=0, delimiter="\t", quoting=3)
 # train = pd.read_csv("HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
-train = pd.read_csv("combined_tweets.csv", header=0, delimiter="\t", quoting=3)
+# train = pd.read_csv("combined_tweets.csv", header=0, delimiter="\t", quoting=3)
 
 num_reviews = train["Tweet"].size
 
@@ -85,16 +85,18 @@ if option == 1:
     if TF_IDF == 0:
         # Bag of words tf count
         test_hill_features = vectorizer.transform(clean_test_h).toarray()
+        pickle.dump(test_hill_features, open("h_all.p", "wb"))
+
         h_avg = np.mean(test_hill_features, axis=0)
-        # np.savetxt("foo.csv", test_hill_features, delimiter=",")
         pickle.dump(h_avg, open("h.p", "wb"))
 
     else:
         # Implement TF-IDF weighting
         train_tf_hill = vectorizer.transform(clean_test_h)
-        h_avg_tfidf = np.mean(train_tf_hill, axis=0)
+        print train_tf_hill.shape
+        pickle.dump(train_tf_hill, open("h_tfidf_all.p", "wb"))
 
-        # np.savetxt("foo_idf.csv", h_avg_tfidf, delimiter=",")
+        h_avg_tfidf = np.mean(train_tf_hill, axis=0)
         pickle.dump(h_avg_tfidf, open("h_tfidf.p", "wb"))
 
 ########################################################################################################################
@@ -113,15 +115,46 @@ if option == 1:
     if TF_IDF == 0:
         # Bag of words tf count
         test_trump_features = vectorizer.transform(clean_test_t).toarray()
+        pickle.dump(test_trump_features, open("t_all.p", "wb"))
+
         t_avg = np.mean(test_trump_features, axis=0)
-        # np.savetxt("foo2.csv", test_trump_features, delimiter=",")
         pickle.dump(t_avg, open("t.p", "wb"))
 
     else:
         train_tf_trump = vectorizer.transform(clean_test_t)
-        t_avg_tfidf = np.mean(train_tf_trump, axis=0)
+        print train_tf_trump.shape
+        pickle.dump(train_tf_trump, open("t_tfidf_all.p", "wb"))
 
-        # np.savetxt("foo2_idf.csv", t_avg_tfidf, delimiter=",")
+        t_avg_tfidf = np.mean(train_tf_trump, axis=0)
         pickle.dump(t_avg_tfidf, open("t_tfidf.p", "wb"))
+
+########################################################################################################################
+    # Calculate vector for test data
+    test_t = pd.read_csv("new_HillaryClinton_tweets.csv", header=0, delimiter="\t", quoting=3)
+
+    num_reviews = len(test_t["Tweet"])
+    clean_test_t = []
+
+    for i in xrange(0, num_reviews):
+        if(i+1) % 100 == 0:
+            print "Processing Test Tweets, Tweet %d of %d\n" % (i+1, num_reviews)
+        clean_trump = review_to_words(test_t["Tweet"][i])
+        clean_test_t.append(clean_trump)
+
+    if TF_IDF == 0:
+        # Bag of words tf count
+        test_trump_features = vectorizer.transform(clean_test_t).toarray()
+        pickle.dump(test_trump_features, open("test3_all.p", "wb"))
+
+        t_avg = np.mean(test_trump_features, axis=0)
+        pickle.dump(t_avg, open("test3.p", "wb"))
+
+    else:
+        train_tf_trump = vectorizer.transform(clean_test_t)
+        print train_tf_trump.shape
+        pickle.dump(train_tf_trump, open("test3_tfidf_all.p", "wb"))
+
+        t_avg_tfidf = np.mean(train_tf_trump, axis=0)
+        pickle.dump(t_avg_tfidf, open("test3_tfidf.p", "wb"))
 
 print "All selected vectors created"
