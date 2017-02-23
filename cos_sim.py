@@ -148,51 +148,6 @@ def load(TF):
     return t1, h1
 
 
-def euclideanDistance(instance1, instance2, length):
-    distance = 0
-    for x in range(length):
-        distance += pow((instance1[x] - instance2[x]), 2)
-    return math.sqrt(distance)
-
-
-def getNeighbors(trainingSet, testInstance, k):
-    distances = []
-    length = len(testInstance) - 1
-    for x in range(len(trainingSet)):
-        dist = euclideanDistance(testInstance, trainingSet[x], length)
-        distances.append((trainingSet[x], dist))
-    distances.sort(key=operator.itemgetter(1))
-    neighbors = []
-    for x in range(k):
-        neighbors.append(distances[x][0])
-    return neighbors
-
-
-def getResponse(neighbors):
-    classVotes = {}
-    for x in range(len(neighbors)):
-        response = neighbors[x][-1]
-        if response in classVotes:
-            classVotes[response] += 1
-        else:
-            classVotes[response] = 1
-    sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
-    return sortedVotes[0][0]
-
-
-def getAccuracy(testSet, predictions):
-    correct = 0
-    for x in range(len(testSet)):
-        if testSet[x][-1] == predictions[x]:
-            correct += 1
-            print 'Match'
-    return (correct / float(len(testSet))) * 100.0
-
-
-def sim_calc2():
-    print'k-NN similarity classifier'
-
-
 ########################################################################################################################
 """ Options
     Toggling the program between GUI and CLI.
@@ -200,11 +155,10 @@ def sim_calc2():
     Automation toggle.
     0 for off,  1 for on.
 """
-GUI = 0
+GUI = 1
 clear_after_submit = 1
 automate = 0
-cosine = 0
-kNN = 0
+cosine = 1
 
 TF_IDF = pickle.load(open("setting_tfidf.p", "rb"))
 features = pickle.load(open("features.p", "rb"))

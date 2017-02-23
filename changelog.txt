@@ -1,3 +1,19 @@
+Changelog 2.0
+
+Vectors normalised to remove the effects of document length
+Latent Semantic Analysis through Singular Value Decomposition implemented for k-NN classifier
+Training and Test set recreated to preserve original tweets content and formatting
+Testing programs for k-NN size, number of SVD dimensions created
+Results of automation saved to individual folders and output files
+Folders created for each individual number of SVD dimensions, contains test results and trained SVD
+Commandline testing program for k-NN and LSA similarity implemented
+New Programs:
+  - Create_SVD    : Transforms training and testing data to reduce dimensions through LSA
+  - knn_sim       : Commandline testing of k-NN and LSA classifier
+  - test_SVD_nn   : Tests a range of SVD's and k-NN and outputs accuracy scores on the test set
+  - test_num_nn   : Tests for a range of NN for a set number of SVD dimensions
+  - test_num_dimen: Tests for a range of SVD dimensions for a set number of NN
+
 Changelog 1.5.5
 
 Implementation of k-Nearest neighbour (k-NN) classifier https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
